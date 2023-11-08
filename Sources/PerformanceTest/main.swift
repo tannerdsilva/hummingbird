@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 import Hummingbird
+import HummingbirdCore
 import HummingbirdFoundation
 import NIOPosix
 
@@ -21,7 +22,7 @@ let hostname = HBEnvironment.shared.get("SERVER_HOSTNAME") ?? "127.0.0.1"
 let port = HBEnvironment.shared.get("SERVER_PORT", as: Int.self) ?? 8080
 
 // create app
-let elg = MultiThreadedEventLoopGroup(numberOfThreads: 2)
+let elg = MultiThreadedEventLoopGroup(numberOfThreads: 8)
 defer { try? elg.syncShutdownGracefully() }
 var router = HBRouterBuilder()
 // number of raw requests
@@ -44,6 +45,7 @@ router.get("json") { _, _ in
 
 var app = HBApplication(
     responder: router.buildResponder(),
+    channelSetup: SimpleHTTP1Channel(),
     configuration: .init(
         address: .hostname(hostname, port: port),
         serverName: "Hummingbird"
