@@ -12,6 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+import HummingbirdCore
+
 /// Group of middleware that can be used to create a responder chain. Each middleware calls the next one
 public final class HBMiddlewareGroup<Context> {
     var middlewares: [any HBMiddlewareProtocol<Context>]

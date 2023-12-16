@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 import HTTPTypes
+import HummingbirdCore
 import NIOCore
 
 /// Options available to routes

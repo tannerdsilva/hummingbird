@@ -12,6 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+import HummingbirdCore
 import NIOCore
 
 /// Middleware Handler with generic input, context and output types

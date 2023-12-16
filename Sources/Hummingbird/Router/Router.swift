@@ -12,6 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+import HummingbirdCore
+
 /// Directs requests to handlers based on the request uri and method.
 ///
 /// Conforms to `HBResponder` so need to provide its own implementation of
