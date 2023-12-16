@@ -16,8 +16,8 @@ import HummingbirdCore
 import NIOSSL
 
 extension HBHTTPChannelSetupBuilder {
-    public static func tls<BaseChannel: HBChannelSetup>(
-        _ base: HBHTTPChannelSetupBuilder<BaseChannel> = .http1(),
+    public static func tls<BaseChannel: HTTPChannelHandler>(
+        _ base: HBHTTPChannelSetupBuilder<BaseChannel>,
         tlsConfiguration: TLSConfiguration
     ) throws -> HBHTTPChannelSetupBuilder<TLSChannel<BaseChannel>> {
         return .init { responder in

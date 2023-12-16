@@ -23,18 +23,18 @@ import NIOHTTPTypesHTTP2
 import NIOPosix
 import NIOSSL
 
-public struct HTTP2Channel: HTTPChannelHandler {
+public struct HTTP2Channel<Responder: HBResponder<Channel>>: HTTPChannelHandler {
     public typealias Value = EventLoopFuture<NIONegotiatedHTTPVersion<HTTP1Channel.Value, (NIOAsyncChannel<HTTP2Frame, HTTP2Frame>, NIOHTTP2Handler.AsyncStreamMultiplexer<HTTP1Channel.Value>)>>
 
     private let sslContext: NIOSSLContext
-    private let http1: HTTP1Channel
+    private let http1: HTTP1Channel<Responder>
     private let additionalChannelHandlers: @Sendable () -> [any RemovableChannelHandler]
-    public var responder: @Sendable (HBRequest, Channel) async throws -> HBResponse { http1.responder }
+    public var responder: Responder { http1.responder }
 
     public init(
         tlsConfiguration: TLSConfiguration,
         additionalChannelHandlers: @escaping @Sendable () -> [any RemovableChannelHandler] = { [] },
-        responder: @escaping @Sendable (HBRequest, Channel) async throws -> HBResponse = { _, _ in throw HBHTTPError(.notImplemented) }
+        responder: Responder
     ) throws {
         var tlsConfiguration = tlsConfiguration
         tlsConfiguration.applicationProtocols = NIOHTTP2SupportedALPNProtocols
@@ -50,7 +50,7 @@ public struct HTTP2Channel: HTTPChannelHandler {
             return channel.eventLoop.makeFailedFuture(error)
         }
 
-        return channel.configureAsyncHTTPServerPipeline { http1Channel -> EventLoopFuture<HTTP1Channel.Value> in
+        return channel.configureAsyncHTTPServerPipeline { http1Channel -> EventLoopFuture<HTTP1Channel<Responder>.Value> in
             let childChannelHandlers: [ChannelHandler] =
                 [HTTP1ToHTTPServerCodec(secure: false)] +
                 self.additionalChannelHandlers() +
@@ -60,13 +60,13 @@ public struct HTTP2Channel: HTTPChannelHandler {
                 .pipeline
                 .addHandlers(childChannelHandlers)
                 .flatMapThrowing {
-                    try HTTP1Channel.Value(wrappingChannelSynchronously: http1Channel)
+                    try HTTP1Channel<Responder>.Value(wrappingChannelSynchronously: http1Channel)
                 }
         } http2ConnectionInitializer: { http2Channel -> EventLoopFuture<NIOAsyncChannel<HTTP2Frame, HTTP2Frame>> in
             http2Channel.eventLoop.makeCompletedFuture {
                 try NIOAsyncChannel<HTTP2Frame, HTTP2Frame>(wrappingChannelSynchronously: http2Channel)
             }
-        } http2StreamInitializer: { http2ChildChannel -> EventLoopFuture<HTTP1Channel.Value> in
+        } http2StreamInitializer: { http2ChildChannel -> EventLoopFuture<HTTP1Channel<Responder>.Value> in
             let childChannelHandlers: [ChannelHandler] =
                 self.additionalChannelHandlers() + [
                     HBHTTPUserEventHandler(logger: logger),
@@ -78,7 +78,7 @@ public struct HTTP2Channel: HTTPChannelHandler {
                 .flatMap {
                     http2ChildChannel.pipeline.addHandlers(childChannelHandlers)
                 }.flatMapThrowing {
-                    try HTTP1Channel.Value(wrappingChannelSynchronously: http2ChildChannel)
+                    try HTTP1Channel<Responder>.Value(wrappingChannelSynchronously: http2ChildChannel)
                 }
         }
     }

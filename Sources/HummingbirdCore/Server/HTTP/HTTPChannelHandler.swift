@@ -21,7 +21,7 @@ import ServiceLifecycle
 
 /// Protocol for HTTP channels
 public protocol HTTPChannelHandler: HBChannelSetup {
-    typealias Responder = @Sendable (HBRequest, Channel) async throws -> HBResponse
+    associatedtype Responder: HBResponder<Channel>
     var responder: Responder { get }
 }
 
@@ -60,7 +60,7 @@ extension HTTPChannelHandler {
                             group.addTask {
                                 let response: HBResponse
                                 do {
-                                    response = try await self.responder(request, asyncChannel.channel)
+                                    response = try await self.responder.respond(to: request, context: asyncChannel.channel)
                                 } catch {
                                     response = self.getErrorResponse(from: error, allocator: asyncChannel.channel.allocator)
                                 }

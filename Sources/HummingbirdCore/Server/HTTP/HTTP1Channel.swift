@@ -18,11 +18,11 @@ import NIOCore
 import NIOHTTPTypes
 import NIOHTTPTypesHTTP1
 
-public struct HTTP1Channel: HBChannelSetup, HTTPChannelHandler {
+public struct HTTP1Channel<Responder: HBResponder<Channel>>: HBChannelSetup, HTTPChannelHandler {
     public typealias Value = NIOAsyncChannel<HTTPRequestPart, HTTPResponsePart>
 
     public init(
-        responder: @escaping @Sendable (HBRequest, Channel) async throws -> HBResponse,
+        responder: Responder,
         additionalChannelHandlers: @escaping @Sendable () -> [any RemovableChannelHandler] = { [] }
     ) {
         self.additionalChannelHandlers = additionalChannelHandlers
@@ -51,6 +51,6 @@ public struct HTTP1Channel: HBChannelSetup, HTTPChannelHandler {
         await handleHTTP(asyncChannel: asyncChannel, logger: logger)
     }
 
-    public let responder: @Sendable (HBRequest, Channel) async throws -> HBResponse
+    public let responder: Responder
     let additionalChannelHandlers: @Sendable () -> [any RemovableChannelHandler]
 }

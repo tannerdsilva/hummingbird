@@ -31,7 +31,7 @@ public struct TLSChannel<BaseChannel: HBChannelSetup>: HBChannelSetup {
 }
 
 extension TLSChannel: HTTPChannelHandler where BaseChannel: HTTPChannelHandler {
-    public var responder: @Sendable (HBRequest, Channel) async throws -> HBResponse {
+    public var responder: BaseChannel.Responder {
         baseChannel.responder
     }
 }

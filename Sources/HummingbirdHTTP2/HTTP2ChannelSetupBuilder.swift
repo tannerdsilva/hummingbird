@@ -17,10 +17,10 @@ import NIOCore
 import NIOSSL
 
 extension HBHTTPChannelSetupBuilder {
-    public static func http2(
+    public static func http2<Responder: HBResponder<Channel>>(
         tlsConfiguration: TLSConfiguration,
         additionalChannelHandlers: @autoclosure @escaping @Sendable () -> [any RemovableChannelHandler] = []
-    ) throws -> HBHTTPChannelSetupBuilder<HTTP2Channel> {
+    ) throws -> HBHTTPChannelSetupBuilder<HTTP2Channel<Responder>> {
         return .init { responder in
             return try HTTP2Channel(
                 tlsConfiguration: tlsConfiguration,
