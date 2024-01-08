@@ -14,25 +14,36 @@
 
 import ServiceLifecycle
 
-public actor GracefulShutdownWaiter {
-    private var taskContinuation: CheckedContinuation<Void, Never>?
+/// An actor that provides a function to wait on cancellation/graceful shutdown.
+public actor CancellationWaiter {
+    private var taskContinuation: CheckedContinuation<Void, Error>?
 
     public init() {}
 
-    public func wait() async {
-        await withGracefulShutdownHandler {
-            await withCheckedContinuation { continuation in
-                self.taskContinuation = continuation
+    public func wait() async throws {
+        try await withTaskCancellationHandler {
+            try await withGracefulShutdownHandler {
+                try await withCheckedThrowingContinuation { continuation in
+                    self.taskContinuation = continuation
+                }
+            } onGracefulShutdown: {
+                Task {
+                    await self.finish()
+                }
             }
-        } onGracefulShutdown: {
+        } onCancel: {
             Task {
-                await self.stop()
+                await self.finish(throwing: CancellationError())
             }
         }
     }
 
-    private func stop() {
-        self.taskContinuation?.resume()
+    public func finish(throwing error: Error? = nil) {
+        if let error {
+            self.taskContinuation?.resume(throwing: error)
+        } else {
+            self.taskContinuation?.resume()
+        }
         self.taskContinuation = nil
     }
 }

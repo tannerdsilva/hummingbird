@@ -515,7 +515,7 @@ final class ApplicationTests: XCTestCase {
             static let shutdown = ManagedAtomic(false)
             func run() async throws {
                 Self.started.store(true, ordering: .relaxed)
-                await GracefulShutdownWaiter().wait()
+                try await CancellationWaiter().wait()
                 Self.shutdown.store(true, ordering: .relaxed)
             }
         }
